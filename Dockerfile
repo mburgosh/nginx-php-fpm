@@ -5,7 +5,6 @@ MAINTAINER Andreas Krüger <ak@patientsky.com>
 ENV php_conf /etc/php/7.1/fpm/php.ini
 ENV fpm_conf /etc/php/7.1/fpm/pool.d/www.conf
 ENV DEBIAN_FRONTEND noninteractive
-ENV composer_hash 55d6ead61b29c7bdee5cccfb50076874187bd9f21f65d8991d46ec5cc90518f447387fb9f76ebae1fbbacf329e583e30
 
 RUN apt-get update \
     && apt-get install -y -q --no-install-recommends \
@@ -65,11 +64,11 @@ RUN mkdir -p /etc/nginx && \
     mkdir -p /run/nginx && \
     mkdir -p /var/log/supervisor
 
-ADD conf/supervisord.conf /etc/supervisord.conf
+ADD docker/nginx-php-fpm/conf/supervisord.conf /etc/supervisord.conf
 
 # Copy our nginx config
 RUN rm -Rf /etc/nginx/nginx.conf
-ADD conf/nginx.conf /etc/nginx/nginx.conf
+ADD docker/nginx-php-fpm/conf/nginx.conf /etc/nginx/nginx.conf
 
 # RUN useradd -ms /bin/bash nginx
 
@@ -81,7 +80,7 @@ rm -Rf /etc/nginx/sites-enabled/* && \
 rm -Rf /var/www/* && \
 mkdir /var/www/html/
 
-ADD conf/nginx-site.conf /etc/nginx/sites-available/default.conf
+ADD docker/nginx-php-fpm/conf/nginx-site.conf /etc/nginx/sites-available/default.conf
 RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
 # tweak php and php-fpm config
@@ -140,14 +139,14 @@ RUN echo "opcache.enable=1" >> /etc/php/7.1/fpm/conf.d/10-opcache.ini && \
     echo "opcache.revalidate_freq=60" >> /etc/php/7.1/fpm/conf.d/10-opcache.ini
 
 # Add Scripts
-ADD scripts/start.sh /start.sh
+ADD docker/nginx-php-fpm/scripts/start.sh /start.sh
 RUN chmod 755 /start.sh
 
-ADD src/ /var/www/html
+ADD ./ /var/www/html
 
 # copy in code and errors
 # ADD src/ /var/www/html/
-ADD errors/ /var/www/errors
+ADD docker/nginx-php-fpm/errors/ /var/www/errors
 
 RUN composer_hash=$(wget -q -O - https://composer.github.io/installer.sig) && \
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
@@ -166,4 +165,4 @@ RUN composer_hash=$(wget -q -O - https://composer.github.io/installer.sig) && \
 
 EXPOSE 80
 
-#CMD ["/start.sh"]
+CMD ["/start.sh"]
