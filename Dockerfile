@@ -68,7 +68,7 @@ ADD conf/supervisord.conf /etc/supervisord.conf
 
 # Copy our nginx config
 RUN rm -Rf /etc/nginx/nginx.conf
-ADD nginx.conf /etc/nginx/nginx.conf
+ADD conf/nginx.conf /etc/nginx/nginx.conf
 
 # RUN useradd -ms /bin/bash nginx
 
