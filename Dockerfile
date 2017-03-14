@@ -64,11 +64,11 @@ RUN mkdir -p /etc/nginx && \
     mkdir -p /run/nginx && \
     mkdir -p /var/log/supervisor
 
-ADD docker/nginx-php-fpm/conf/supervisord.conf /etc/supervisord.conf
+ADD conf/supervisord.conf /etc/supervisord.conf
 
 # Copy our nginx config
 RUN rm -Rf /etc/nginx/nginx.conf
-ADD docker/nginx-php-fpm/conf/nginx.conf /etc/nginx/nginx.conf
+ADD nginx.conf /etc/nginx/nginx.conf
 
 # RUN useradd -ms /bin/bash nginx
 
@@ -80,7 +80,7 @@ rm -Rf /etc/nginx/sites-enabled/* && \
 rm -Rf /var/www/* && \
 mkdir /var/www/html/
 
-ADD docker/nginx-php-fpm/conf/nginx-site.conf /etc/nginx/sites-available/default.conf
+ADD conf/nginx-site.conf /etc/nginx/sites-available/default.conf
 RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
 # tweak php and php-fpm config
@@ -139,29 +139,16 @@ RUN echo "opcache.enable=1" >> /etc/php/7.1/fpm/conf.d/10-opcache.ini && \
     echo "opcache.revalidate_freq=60" >> /etc/php/7.1/fpm/conf.d/10-opcache.ini
 
 # Add Scripts
-ADD docker/nginx-php-fpm/scripts/start.sh /start.sh
+ADD scripts/start.sh /start.sh
 RUN chmod 755 /start.sh
 
-ADD ./ /var/www/html
-
-# copy in code and errors
-# ADD src/ /var/www/html/
-ADD docker/nginx-php-fpm/errors/ /var/www/errors
+ADD errors/ /var/www/errors
 
 RUN composer_hash=$(wget -q -O - https://composer.github.io/installer.sig) && \
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
     php -r "if (hash_file('SHA384', 'composer-setup.php') === '${composer_hash}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
     php composer-setup.php --install-dir=/usr/bin --filename=composer && \
     php -r "unlink('composer-setup.php');"
-
-#ADD https://releases.hashicorp.com/consul-template/0.18.0/consul-template_0.18.0_SHA256SUMS /tmp/
-#ADD https://releases.hashicorp.com/consul-template/0.18.0/consul-template_0.18.0_linux_amd64.zip /tmp/
-
-#RUN cd /tmp && \
-#    sha256sum -c consul-template_0.18.0_SHA256SUMS 2>&1 | grep OK && \
-#    unzip consul-template_0.18.0_linux_amd64.zip && \
-#    mv consul-template /bin/consul-template && \
-#    rm -rf /tmp/*
 
 EXPOSE 80
 
